@@ -6,6 +6,7 @@ no pair of nodes is adjacent in the graph.
 
 from typing import Any, Tuple
 import numpy as np
+from copy import deepcopy
 
 from pymhlib.solution import TObj
 from pymhlib.subsetvec_solution import SubsetVectorSolution
@@ -142,6 +143,58 @@ class MISPSolution(SubsetVectorSolution):
     def crossover(self, other: 'MISPSolution') -> 'MISPSolution':
         """Apply subset_crossover."""
         return self.subset_crossover(other)
+
+
+    # methods for GRASP
+    def update_solution(self, sel_elem):
+
+        self.x[self.sel] = sel_elem
+        self.sel += 1
+        self.element_added_delta_eval()
+        self.sort_sel()
+
+
+    def copy_empty(self):
+
+        greedy_sol = MISPSolution(deepcopy(self.inst))
+        greedy_sol.obj_val_valid = False
+        return greedy_sol
+
+
+    def is_complete_solution(self):
+
+        return not self.may_be_extendible()
+
+
+    def candidate_list(self):
+        # get all selected nodes and their neighbors
+        covered = set(self.x[:self.sel])
+        for n in self.x[:self.sel]:
+            covered.update(self.inst.graph.neighbors(n))
+
+        # for each uncovered node get the number of uncovered neighbors
+        candidates = {i:len(set(self.inst.graph.neighbors(i)) - covered) for i,n in  enumerate(self.covered) if n == 0}
+        return candidates
+
+
+    def restricted_candidate_list(self, cl: dict, par):
+
+        rcl = list()
+
+        if type(par) == int:
+            candidates = {k:v for k,v in cl.items()}
+            k = min(len(candidates),par)
+            for i in range(k):
+                key = min(candidates, key=candidates.get)
+                rcl.append(key)
+                candidates.pop(key)
+
+        if type(par) == float:
+            mini = min(cl.values())
+            maxi = max(cl.values())
+            rcl = [k for k,v in cl.items() if v <= mini + par * (maxi-mini)]
+    
+        return np.array(rcl)
 
 
 if __name__ == '__main__':
