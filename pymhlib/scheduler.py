@@ -130,6 +130,7 @@ class Scheduler(ABC):
         self.run_time = None
         self.logger = logging.getLogger("pymhlib")
         self.iter_logger = logging.getLogger("pymhlib_iter")
+        self.step_logger = logging.getLogger("pymhlib_step")
         self.log_iteration_header()
         if self.incumbent_valid:
             self.log_iteration('-', float('NaN'), sol, True, True, None)
@@ -177,6 +178,13 @@ class Scheduler(ABC):
         """
         res = Result()
         obj_old = sol.obj()
+        ##### logging for visualisation
+        if self.step_logger.hasHandlers():
+            sol_str, inc_str = f'{sol}'.replace('\n',' '), f'{self.incumbent}'.replace('\n',' ')
+            step_info = f'START\nSOL: {sol_str}\nOBJ: {obj_old}\nM: {method.name}\n' + \
+                f'PAR: {method.par}\nINC: {inc_str}\nBEST: {self.incumbent.obj()}'
+            self.step_logger.info(step_info)
+        #################
         t_start = time.process_time()
         method.func(sol, method.par, res)
         t_end = time.process_time()
@@ -193,6 +201,13 @@ class Scheduler(ABC):
                 ms.obj_gain += obj_new - obj_old
         self.iteration += 1
         new_incumbent = self.update_incumbent(sol, t_end - self.time_start)
+        ##### logging for visualisation
+        if self.step_logger.hasHandlers():
+            sol_str, inc_str = f'{sol}'.replace('\n',' '), f'{self.incumbent}'.replace('\n',' ') 
+            step_info = f'END\nSOL: {sol_str}\nOBJ: {sol.obj()}\nM: {method.name}\n' + \
+                f'PAR: {method.par}\nINC: {inc_str}\nBEST: {self.incumbent.obj()}\nBETTER: {new_incumbent}'
+            self.step_logger.info(step_info)
+        #################
         terminate = self.check_termination()
         self.log_iteration(method.name, obj_old, sol, new_incumbent, terminate, res.log_info)
         if terminate:
