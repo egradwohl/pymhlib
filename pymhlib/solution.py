@@ -12,6 +12,7 @@ from typing import TypeVar
 from abc import ABC, abstractmethod
 import random
 import numpy as np
+import logging
 
 from pymhlib.settings import settings, get_settings_parser
 
@@ -41,6 +42,7 @@ class Solution(ABC):
         self.obj_val_valid: bool = False
         self.inst = inst
         self.alg = alg
+        self.step_logger = logging.getLogger('pymhlib_step')
 
     @abstractmethod
     def copy(self):
@@ -139,6 +141,54 @@ class Solution(ABC):
             self.invalidate()
             if old_obj != self.obj():
                 raise ValueError(f'Solution has wrong objective value: {old_obj}, should be {self.obj()}')
+
+    # methods for grasp
+    def greedy_randomized_construction(self, par, _result):
+
+        greedy_sol = self.copy_empty()
+
+        while not greedy_sol.is_complete_solution():
+            
+            if self.step_logger.hasHandlers():
+                sol_str = str(greedy_sol).replace('\n', ' ')
+                self.step_logger.info(f'SOL: {sol_str}')
+
+            cl = greedy_sol.candidate_list()
+            rcl = greedy_sol.restricted_candidate_list(cl, par)
+            sel = random.choice(rcl)
+            greedy_sol.update_solution(sel)
+
+            if self.step_logger.hasHandlers():
+                self.step_logger.info(f'CL: {cl}\nPAR: {par}')
+                rcl_str = '[ ' + ' '.join([str(r) for r in rcl]) + ' ]'
+                self.step_logger.info(f'RCL: {rcl_str}')
+                self.step_logger.info(f'SEL: {sel}')
+
+        self.copy_from(greedy_sol)
+        self.obj()
+
+    @abstractmethod
+    def copy_empty(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def is_complete_solution(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def candidate_list(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def restricted_candidate_list(self, cl: dict, par):
+        raise NotImplementedError
+
+    @abstractmethod
+    def update_solution(self, sel):
+        raise NotImplementedError
+
+    def construct_greedy(self, par, _result):
+        self.greedy_randomized_construction( 1, _result)
 
 
 class VectorSolution(Solution, ABC):
