@@ -18,11 +18,14 @@ parser.add_argument("--mh_out", type=str, default="None",
                     help='file to write general output into (None: stdout)')
 parser.add_argument("--mh_log", type=str, default="None",
                     help='file to write iteration-wise logging into (None: stdout)')
+# parser argument for step logger
+parser.add_argument("--mh_log_step", type=str, default="None",
+                    help='file to write detailed step-wise logging into (None: no logging)')
 
 
 def init_logger():
     """Initialize logger objects."""
-
+    print('init logger')
     # logger for general output
     logger = logging.getLogger("pymhlib")
     formatter = logging.Formatter("%(message)s")
@@ -53,6 +56,26 @@ def init_logger():
     iter_logger.addHandler(iter_handler)
     iter_logger.propagate = False
     iter_logger.setLevel(logging.INFO)
+
+    # logger for detailed step-wise output
+    step_logger = logging.getLogger("pymhlib_step")
+    if settings.mh_log_step != 'None':
+        step_file_handler = logging.FileHandler(settings.mh_log_step, "w")
+        step_file_handler.setFormatter(formatter)
+        step_handler = logging.handlers.MemoryHandler(
+            capacity=1024 * 100,
+            flushLevel=logging.ERROR,
+            target=step_file_handler
+        )
+        step_handler.setFormatter(formatter)
+        step_logger.handlers = []
+        step_logger.addHandler(step_handler)
+        step_logger.addHandler(step_file_handler)
+        step_logger.propagate = False
+        step_logger.setLevel(logging.INFO)
+    else:
+        step_logger.handlers = []
+        step_logger.propagate = False
 
 
 class LogLevel:
