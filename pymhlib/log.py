@@ -25,7 +25,6 @@ parser.add_argument("--mh_log_step", type=str, default="None",
 
 def init_logger():
     """Initialize logger objects."""
-    print('init logger')
     # logger for general output
     logger = logging.getLogger("pymhlib")
     formatter = logging.Formatter("%(message)s")
