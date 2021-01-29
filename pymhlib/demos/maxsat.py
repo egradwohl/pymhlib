@@ -6,6 +6,7 @@ The goal is to maximize the number of clauses satisfied in a boolean function gi
 import random
 from typing import Any, Tuple
 import numpy as np
+from copy import deepcopy
 
 from pymhlib.solution import TObj
 from pymhlib.binvec_solution import BinaryVectorSolution
@@ -178,6 +179,59 @@ class MAXSATSolution(BinaryVectorSolution):
     def crossover(self, other: 'MAXSATSolution'):
         """ Perform uniform crossover as crossover."""
         return self.uniform_crossover(other)
+
+    
+    # methods for GRASP
+    def update_solution(self, sel):
+        self.x[abs(sel)-1] = False if sel < 0 else True
+
+        #replace fulfilled clauses in greedy solution by empty array (solution needs to be a deep copy from original sol object!)
+        clauses = [np.array([]) if sel in c else c for c in self.inst.clauses]
+        self.inst.clauses = clauses
+
+
+    def copy_empty(self):
+        greedy_sol = deepcopy(self)
+        greedy_sol.x = np.full([self.inst.n], -1, dtype=int)
+        greedy_sol.obj_val_valid = False
+        return greedy_sol
+
+    def is_complete_solution(self):
+        return not (-1 in self.x)
+
+    def candidate_list(self):
+        candidates = dict()
+
+        for v in [i for i,v in enumerate(self.x,start=1) if v == -1]:
+            candidates[v] = 0
+            candidates[-v] = 0
+            for c in self.inst.variable_usage[v-1]:
+                clause = self.inst.clauses[c]
+                if len(clause) == 0:
+                    continue
+                candidates[v] = candidates[v] + (v in clause)
+                candidates[-v] = candidates[-v] + (-v in clause)
+
+        return candidates
+
+
+    def restricted_candidate_list(self, cl: dict(), par):
+
+        rcl = list()
+
+        if type(par) == int:
+            candidates = {k:v for k,v in cl.items()}
+            k = min(len(candidates),par)
+            for i in range(k):
+                key = max(candidates, key=candidates.get)
+                rcl.append(key)
+                candidates.pop(key)
+
+        if type(par) == float:
+            maximum = max(cl.values())
+            rcl = [k for k,v in cl.items() if v >= maximum * par]
+            
+        return np.array(rcl)
 
 
 if __name__ == '__main__':
