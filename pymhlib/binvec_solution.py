@@ -6,6 +6,7 @@ from typing import Tuple
 import numpy as np
 
 from pymhlib.solution import VectorSolution, TObj
+from pymhlib.ts_helper import TabuList
 
 
 class BinaryVectorSolution(VectorSolution, ABC):
@@ -45,7 +46,7 @@ class BinaryVectorSolution(VectorSolution, ABC):
             if not 0 <= v <= 1:
                 raise ValueError("Invalid value in BinaryVectorSolution: {self.x}")
 
-    def k_flip_neighborhood_search(self, k: int, best_improvement: bool) -> bool:
+    def k_flip_neighborhood_search(self, k: int, best_improvement: bool, tabu_list: TabuList=None, incumbent: VectorSolution=None) -> bool:
         """Perform one major iteration of a k-flip local search, i.e., search one neighborhood.
 
         If best_improvement is set, the neighborhood is completely searched and a best neighbor is kept;
@@ -58,6 +59,7 @@ class BinaryVectorSolution(VectorSolution, ABC):
         assert 0 < k <= len(x)
         better_found = False
         best_sol = self.copy()
+        next_best_sol = False
         perm = np.random.permutation(len(x))  # permutation for randomization of enumeration order
         p = np.full(k, -1)  # flipped positions
         # initialize
@@ -65,11 +67,28 @@ class BinaryVectorSolution(VectorSolution, ABC):
         while i >= 0:
             # evaluate solution
             if i == k:
+                tabu_attr = self.is_tabu(tabu_list)
                 if self.is_better(best_sol):
                     if not best_improvement:
                         return True
-                    best_sol.copy_from(self)
-                    better_found = True
+                    if (tabu_attr != None and self.is_better(incumbent)):
+
+                        tabu_list.delete(tabu_attr)
+                        best_sol.copy_from(self)
+                        better_found = True
+                    elif tabu_attr == None:
+                        best_sol.copy_from(self)
+                        better_found = True
+                elif tabu_list != None and tabu_attr != None:
+                    # the solution found is not better:
+                    # when ts is used and the found solution is not tabu
+                    if not next_best_sol: 
+                        #first round: copy in any case
+                        next_best_sol = self.copy()
+                    elif self.is_better(next_best_sol): 
+                        # copy only if it is better than previously recorded
+                        next_best_sol = self.copy()
+
                 i -= 1  # backtrack
             else:
                 if p[i] == -1:
@@ -90,6 +109,9 @@ class BinaryVectorSolution(VectorSolution, ABC):
                     i -= 1
         if better_found:
             self.copy_from(best_sol)
+            self.invalidate()
+        elif tabu_list != None:
+            self.copy_from(next_best_sol)
             self.invalidate()
         return better_found
 
@@ -124,3 +146,4 @@ class BinaryVectorSolution(VectorSolution, ABC):
         p = random.randrange(len(self.x))
         delta_obj = self.flip_move_delta_eval(p)
         return p, delta_obj
+

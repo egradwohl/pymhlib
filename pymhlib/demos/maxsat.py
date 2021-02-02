@@ -12,6 +12,7 @@ from pymhlib.solution import TObj
 from pymhlib.binvec_solution import BinaryVectorSolution
 from pymhlib.alns import ALNS
 from pymhlib.scheduler import Result
+from pymhlib.ts_helper import TabuList, TabuAttribute
 
 
 class MAXSATInstance:
@@ -232,6 +233,23 @@ class MAXSATSolution(BinaryVectorSolution):
             rcl = [k for k,v in cl.items() if v >= maximum * par]
             
         return np.array(rcl)
+
+
+    def is_tabu(self, tabu_list: TabuList):
+        if tabu_list == None:
+            return None
+        solution = {i*-1 if v ==0 else i for i,v in enumerate(self.x,start=1)}
+        for ta in tabu_list.tabu_list:
+            if ta.attribute.issubset(solution):
+                return ta
+        return None
+
+    def get_tabu_attribute(self, sol_old: 'MAXSATSolution'):
+        # tabu attribute is stored as set of positive/negative variables
+        new_sol = {i*-1 if v ==0 else i for i,v in enumerate(self.x,start=1)}
+        old_sol = {i*-1 if v ==0 else i for i,v in enumerate(sol_old.x,start=1)}
+        return old_sol.difference(new_sol)
+        
 
 
 if __name__ == '__main__':

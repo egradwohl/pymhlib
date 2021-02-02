@@ -15,6 +15,7 @@ import numpy as np
 import logging
 
 from pymhlib.settings import settings, get_settings_parser
+from pymhlib.ts_helper import TabuList
 
 parser = get_settings_parser()
 parser.add_argument("--mh_xover_pts", type=int, default=1, help='number of crossover points in multi-point crossover')
@@ -167,28 +168,39 @@ class Solution(ABC):
         self.copy_from(greedy_sol)
         self.obj()
 
-    @abstractmethod
+
     def copy_empty(self):
         raise NotImplementedError
 
-    @abstractmethod
+
     def is_complete_solution(self):
         raise NotImplementedError
 
-    @abstractmethod
+
     def candidate_list(self):
         raise NotImplementedError
 
-    @abstractmethod
+
     def restricted_candidate_list(self, cl: dict, par):
         raise NotImplementedError
 
-    @abstractmethod
+
     def update_solution(self, sel):
         raise NotImplementedError
 
     def construct_greedy(self, par, _result):
         self.greedy_randomized_construction( 1, _result)
+
+
+    def is_tabu(self, tabu_list: TabuList):
+        raise NotImplementedError
+
+
+    def get_tabu_attribute(self, sol_old: 'Solution'):
+        raise NotImplementedError
+
+
+
 
 
 class VectorSolution(Solution, ABC):
