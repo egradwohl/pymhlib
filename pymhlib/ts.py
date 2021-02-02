@@ -7,10 +7,12 @@ from pymhlib.ts_helper import TabuList
 from typing import List, Callable, Any
 import time
 import random as rd
+import logging
 
 
 
 class TS(Scheduler):
+
 
     def __init__(self, sol: Solution, meths_ch: List[Method], meths_rli: List[Method],
                 min_ll: int=5, max_ll: int=5, change_ll_iter: int=1,
@@ -23,27 +25,41 @@ class TS(Scheduler):
 
     def update_tabu_list(self, sol: Solution, sol_old: Solution):
         self.tabu_list.update_list()
-        l = self.tabu_list.generate_list_length(self.iteration)
-        self.tabu_list.append(sol.get_tabu_attribute(sol_old), l)
+        if self.incumbent_iteration == self.iteration and self.incumbent.is_tabu(self.tabu_list):
+            # a new incumbent was found, but it was tabu (aspiration criterion)
+            # get the violated tabu attribute and delete it from the list
+            tabu_attribute = sol_old.get_tabu_attribute(self.incumbent)
+            self.tabu_list.delete_attribute(tabu_attribute)
+            if self.step_logger.hasHandlers():
+                self.step_logger.info(f'TA_DEL: {tabu_attribute}')
+        else:
+            l = self.tabu_list.generate_list_length(self.iteration)
+            self.tabu_list.add_attribute(sol.get_tabu_attribute(sol_old), l)
+
     
     
     def ts(self, sol: Solution):
 
+        
         while True:
+            # use of multiple different methods for restricted neighborhood search is possible,
+            # but usually only one is used
             for m in self.next_method(self.meths_rli, repeat=True):
                 sol_old = sol.copy()
-
                 def ts_iteration(sol: Solution, _par, result):
                     m.func(sol, m.par, best_improvement=True, tabu_list=self.tabu_list, incumbent=self.incumbent)
                 ts_method = Method(m.name, ts_iteration, self.tabu_list.generate_list_length(self.iteration))
-
-                #if self.step_logger.hasHandlers():
-                 #   self.step_logger.info()
 
                 t_start = time.process_time()
                 res = self.perform_method(ts_method, sol, delayed_success=True)
                 self.update_tabu_list(sol, sol_old)
                 self.delayed_success_update(m, sol.obj(), t_start, sol_old)
+
+                if self.step_logger.hasHandlers():
+                    self.step_logger.info(f'LL: {self.tabu_list.current_ll}')
+                    for ta in self.tabu_list.tabu_list:
+                        self.step_logger.info(f'TA: {ta}')
+
                 if res.terminate:
                     return
 
@@ -58,32 +74,3 @@ class TS(Scheduler):
 
 
 
-
-
-
-
-if __name__ == '__main__':
-    from pymhlib.settings import get_settings_parser, settings
-    parser = get_settings_parser()
-    settings.mh_titer=50
-    settings.mh_out='summary.log'
-    def meth_rli(sol: MAXSATSolution, par, res):
-        sol.x[0] = not sol.x[0]
-        print('   restricted local search with tabulist', par)
-
-    def get_tabu_attribute(sol, old_sol):
-        print('   calculate changed elem an return it', sol, old_sol)
-        elem = -1
-        for i, e in enumerate(sol.x):
-            if bool(e) != bool(old_sol.x[i]):
-                elem = i+1 if e else -(i+1)
-                print('       elem', elem)
-                return elem
-        return None
-        
-    m_rli = Method('rli1',meth_rli,None)
-
-    inst = MAXSATInstance('maxsat-simple.cnf')
-    sol = MAXSATSolution(inst)
-    ts = TS(sol,[Method('ch',MAXSATSolution.construct,0)], [m_rli], get_tabu_attribute)
-    ts.run()

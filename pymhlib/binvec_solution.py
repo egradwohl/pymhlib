@@ -67,27 +67,23 @@ class BinaryVectorSolution(VectorSolution, ABC):
         while i >= 0:
             # evaluate solution
             if i == k:
-                tabu_attr = self.is_tabu(tabu_list)
+
+                sol_is_tabu = self.is_tabu(tabu_list)
                 if self.is_better(best_sol):
                     if not best_improvement:
                         return True
-                    if (tabu_attr != None and self.is_better(incumbent)):
-
-                        tabu_list.delete(tabu_attr)
+                    if (sol_is_tabu and self.is_better(incumbent)) or not sol_is_tabu:
+                        #tabu_list.delete(tabu_attr) #deletion of attribute in ts
                         best_sol.copy_from(self)
                         better_found = True
-                    elif tabu_attr == None:
-                        best_sol.copy_from(self)
-                        better_found = True
-                elif tabu_list != None and tabu_attr != None:
+                elif tabu_list != None and not sol_is_tabu:
                     # the solution found is not better:
                     # when ts is used and the found solution is not tabu
-                    if not next_best_sol: 
+                    # TODO tie breaking?
+                    if not next_best_sol or self.is_better(next_best_sol):
                         #first round: copy in any case
                         next_best_sol = self.copy()
-                    elif self.is_better(next_best_sol): 
-                        # copy only if it is better than previously recorded
-                        next_best_sol = self.copy()
+
 
                 i -= 1  # backtrack
             else:
@@ -110,7 +106,7 @@ class BinaryVectorSolution(VectorSolution, ABC):
         if better_found:
             self.copy_from(best_sol)
             self.invalidate()
-        elif tabu_list != None:
+        elif tabu_list != None and next_best_sol:
             self.copy_from(next_best_sol)
             self.invalidate()
         return better_found

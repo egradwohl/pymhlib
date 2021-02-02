@@ -18,8 +18,8 @@ class TabuAttribute():
     def __repr__(self) -> str:
         return str((str(self.attribute),str(self.lifespan)))
 
-    def __eq__(self, o: 'TabuAttribute') -> bool:
-        if o == None:
+    def __eq__(self, o) -> bool:
+        if o == None or not isinstance(o, TabuAttribute):
             return False
         return (self.attribute == o.attribute) and (o.lifespan == self.lifespan)
 
@@ -32,22 +32,26 @@ class TabuList():
         self.max_ll = max_ll
         self.change_ll_iter = change_ll_iter if self.min_ll < self.max_ll else 0
         self.tabu_list = []
+        self.current_ll = rd.choice(range(self.min_ll,self.max_ll+1))
 
     def __repr__(self) -> str:
         return str(self.tabu_list)
 
-    def append(self, attribute: Any, lifespan: int):
+    def add_attribute(self, attribute: Any, lifespan: int):
+        if not attribute:
+            return
         self.tabu_list.append(TabuAttribute(attribute,lifespan))
 
     def generate_list_length(self, current_iter: int):
-        if self.change_ll_iter == 0: #list length is never changed
-            return self.max_ll # TODO what if user chooses to never change, but sets min != max? 
+        if self.change_ll_iter == 0:
+            return self.current_ll
         if current_iter % self.change_ll_iter == 0:
-            return rd.choice(range(self.min_ll,self.max_ll+1))
+            self.current_ll = rd.choice(range(self.min_ll,self.max_ll+1))
+        return self.current_ll
         
-    def delete(self, to_delete: TabuAttribute):
-        # TODO is there any case where an element can be in the list more than once?
-        attr_idx = [i for i, elem in enumerate(self.tabu_list) if elem == to_delete]
+    def delete_attribute(self, to_delete: Any):
+        attr_idx = [i for i, elem in enumerate(self.tabu_list) if elem.attribute == to_delete]
+        attr_idx.reverse()
         for i in attr_idx:
             self.tabu_list.pop(i)
 
