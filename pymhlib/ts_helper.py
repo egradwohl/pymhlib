@@ -16,7 +16,7 @@ class TabuAttribute():
         return self
 
     def __repr__(self) -> str:
-        return str((str(self.attribute),str(self.lifespan)))
+        return str((self.attribute,self.lifespan))
 
     def __eq__(self, o) -> bool:
         if o == None or not isinstance(o, TabuAttribute):

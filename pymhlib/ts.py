@@ -24,41 +24,47 @@ class TS(Scheduler):
         self.meths_rli = meths_rli 
 
     def update_tabu_list(self, sol: Solution, sol_old: Solution):
-        self.tabu_list.update_list()
+        
         if self.incumbent_iteration == self.iteration and self.incumbent.is_tabu(self.tabu_list):
-            # a new incumbent was found, but it was tabu (aspiration criterion)
+            # a new best solution was found, but it was tabu (aspiration criterion)
             # get the violated tabu attribute and delete it from the list
-            tabu_attribute = sol_old.get_tabu_attribute(self.incumbent)
-            self.tabu_list.delete_attribute(tabu_attribute)
+            tabu_violated = sol_old.get_tabu_attribute(self.incumbent)
+            self.tabu_list.delete_attribute(tabu_violated)
             if self.step_logger.hasHandlers():
-                self.step_logger.info(f'TA_DEL: {tabu_attribute}')
+                self.step_logger.info(f'TA_DEL: {tabu_violated}')
+            self.tabu_list.update_list() # updates lifespan of each tabu attribute and deletes expired attributes
+
         else:
-            l = self.tabu_list.generate_list_length(self.iteration)
-            self.tabu_list.add_attribute(sol.get_tabu_attribute(sol_old), l)
+            self.tabu_list.update_list() # updates lifespan of each tabu attribute and deletes expired attributes
+            self.tabu_list.add_attribute(sol.get_tabu_attribute(sol_old), self.tabu_list.current_ll)
 
     
     
     def ts(self, sol: Solution):
 
-        
         while True:
             # use of multiple different methods for restricted neighborhood search is possible,
             # but usually only one is used
             for m in self.next_method(self.meths_rli, repeat=True):
                 sol_old = sol.copy()
+
                 def ts_iteration(sol: Solution, _par, result):
+                    if self.step_logger.hasHandlers():
+                        for ta in self.tabu_list.tabu_list:
+                            self.step_logger.info(f'TA: {ta}')
                     m.func(sol, m.par, best_improvement=True, tabu_list=self.tabu_list, incumbent=self.incumbent)
-                ts_method = Method(m.name, ts_iteration, self.tabu_list.generate_list_length(self.iteration))
+
+                ll = self.tabu_list.generate_list_length(self.iteration) # generate list length for current iteration
+                ts_method = Method(m.name, ts_iteration, ll)
 
                 t_start = time.process_time()
                 res = self.perform_method(ts_method, sol, delayed_success=True)
                 self.update_tabu_list(sol, sol_old)
                 self.delayed_success_update(m, sol.obj(), t_start, sol_old)
-
                 if self.step_logger.hasHandlers():
-                    self.step_logger.info(f'LL: {self.tabu_list.current_ll}')
                     for ta in self.tabu_list.tabu_list:
                         self.step_logger.info(f'TA: {ta}')
+                    self.step_logger.info('END_ITER')
 
                 if res.terminate:
                     return
