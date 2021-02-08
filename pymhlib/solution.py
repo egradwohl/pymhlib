@@ -169,22 +169,23 @@ class Solution(ABC):
         self.obj()
 
 
+    @abstractmethod
     def copy_empty(self):
         raise NotImplementedError
 
-
+    @abstractmethod
     def is_complete_solution(self):
         raise NotImplementedError
 
-
+    @abstractmethod
     def candidate_list(self):
         raise NotImplementedError
 
-
+    @abstractmethod
     def restricted_candidate_list(self, cl: dict, par):
         raise NotImplementedError
 
-
+    @abstractmethod
     def update_solution(self, sel):
         raise NotImplementedError
 

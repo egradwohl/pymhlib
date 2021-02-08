@@ -32,11 +32,9 @@ class TS(Scheduler):
             self.tabu_list.delete_attribute(tabu_violated)
             if self.step_logger.hasHandlers():
                 self.step_logger.info(f'TA_DEL: {tabu_violated}')
-            self.tabu_list.update_list() # updates lifespan of each tabu attribute and deletes expired attributes
-
-        else:
-            self.tabu_list.update_list() # updates lifespan of each tabu attribute and deletes expired attributes
-            self.tabu_list.add_attribute(sol.get_tabu_attribute(sol_old), self.tabu_list.current_ll)
+            
+        self.tabu_list.update_list() # updates lifespan of each tabu attribute and deletes expired attributes
+        self.tabu_list.add_attribute(sol.get_tabu_attribute(sol_old), self.tabu_list.current_ll)
 
     
     
@@ -61,6 +59,7 @@ class TS(Scheduler):
                 res = self.perform_method(ts_method, sol, delayed_success=True)
                 self.update_tabu_list(sol, sol_old)
                 self.delayed_success_update(m, sol.obj(), t_start, sol_old)
+                
                 if self.step_logger.hasHandlers():
                     for ta in self.tabu_list.tabu_list:
                         self.step_logger.info(f'TA: {ta}')

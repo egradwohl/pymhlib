@@ -7,6 +7,7 @@ from itertools import chain
 import numpy as np
 
 from pymhlib.solution import VectorSolution, Solution
+from pymhlib.ts_helper import TabuList
 
 
 class SubsetVectorSolution(VectorSolution, ABC):
@@ -151,7 +152,7 @@ class SubsetVectorSolution(VectorSolution, ABC):
                 self.element_removed_delta_eval(allow_infeasible=True)
             self.sort_sel()
 
-    def two_exchange_random_fill_neighborhood_search(self, best_improvement) -> bool:
+    def two_exchange_random_fill_neighborhood_search(self, best_improvement, tabu_list: TabuList=None, incumbent: VectorSolution=None) -> bool:
         """Search 2-exchange neighborhood followed by fill() with random ordering.
 
         Each selected location is tried to be exchanged with each unselected one followed by a fill().
@@ -161,6 +162,7 @@ class SubsetVectorSolution(VectorSolution, ABC):
         delta evaluation.
         Returns True if the solution could be improved, otherwise the solution remains unchanged.
         """
+        next_best_sol = False
         sel = self.sel
         x = self.x
         orig_obj = self.obj()
