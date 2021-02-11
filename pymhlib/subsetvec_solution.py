@@ -5,6 +5,7 @@ from abc import ABC
 from typing import Union
 from itertools import chain
 import numpy as np
+import logging
 
 from pymhlib.solution import VectorSolution, Solution
 from pymhlib.ts_helper import TabuList
@@ -162,8 +163,11 @@ class SubsetVectorSolution(VectorSolution, ABC):
         delta evaluation.
         Returns True if the solution could be improved, otherwise the solution remains unchanged.
         """
+
         next_best_sol = False
         sel = self.sel
+        if tabu_list != None:
+            best_improvement = True
         x = self.x
         orig_obj = self.obj()
         self_backup = None
@@ -184,6 +188,7 @@ class SubsetVectorSolution(VectorSolution, ABC):
                 pool[0], pool[v_pos] = pool[v_pos], pool[0]
             for j, vu in enumerate(pool[1:]):
                 x[sel-1], pool[j+1] = vu, x[sel-1]
+                
                 self.sel += 1
                 num_neighbors += 1
                 if self.element_added_delta_eval():
@@ -193,12 +198,20 @@ class SubsetVectorSolution(VectorSolution, ABC):
                         self_backup = self.copy()
                         self.fill(self.get_extension_pool())
                         random_fill_applied = True
+
+                    ## check if solution is tabu
+                    sol_is_tabu = self.is_tabu(tabu_list)
                     if self.is_better(best):
                         # new best solution found
                         if not best_improvement:
                             self.sort_sel()
                             return True
-                        best.copy_from(self)
+                        if (sol_is_tabu and self.is_better(incumbent)) or not sol_is_tabu:
+                            best.copy_from(self)
+                    elif tabu_list != None and not sol_is_tabu:
+                        if not next_best_sol or self.is_better(next_best_sol):
+                            next_best_sol = self.copy()
+                            next_best_sol.sort_sel()
                     if random_fill_applied:
                         if i != self.sel:
                             x[i], x[sel-1] = x[sel-1], x[i]
@@ -217,6 +230,10 @@ class SubsetVectorSolution(VectorSolution, ABC):
             self.copy_from(best)
             self.sort_sel()
             return True
+        elif tabu_list != None and next_best_sol:
+            self.copy_from(next_best_sol)
+            self.sort_sel()
+            return False
         x[:sel] = x_sel_orig
         return False
 

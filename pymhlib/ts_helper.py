@@ -1,7 +1,6 @@
 import random as rd
 from typing import Any
 
-
 class TabuAttribute():
 
     def __init__(self, attr: Any, lifespan: int):

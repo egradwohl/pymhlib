@@ -29,7 +29,8 @@ class TS(Scheduler):
             # a new best solution was found, but it was tabu (aspiration criterion)
             # get the violated tabu attribute and delete it from the list
             tabu_violated = sol_old.get_tabu_attribute(self.incumbent)
-            self.tabu_list.delete_attribute(tabu_violated)
+            for t in tabu_violated:
+                self.tabu_list.delete_attribute({t})
             if self.step_logger.hasHandlers():
                 self.step_logger.info(f'TA_DEL: {tabu_violated}')
             
@@ -50,8 +51,11 @@ class TS(Scheduler):
                     if self.step_logger.hasHandlers():
                         for ta in self.tabu_list.tabu_list:
                             self.step_logger.info(f'TA: {ta}')
-                    m.func(sol, m.par, best_improvement=True, tabu_list=self.tabu_list, incumbent=self.incumbent)
-
+                    # TODO temporary workaround
+                    if 'k' in m.func.__code__.co_varnames: 
+                        m.func(sol, m.par, best_improvement=True, tabu_list=self.tabu_list, incumbent=self.incumbent)
+                    else:
+                        m.func(sol,best_improvement=True, tabu_list=self.tabu_list, incumbent=self.incumbent)
                 ll = self.tabu_list.generate_list_length(self.iteration) # generate list length for current iteration
                 ts_method = Method(m.name, ts_iteration, ll)
 
@@ -59,7 +63,7 @@ class TS(Scheduler):
                 res = self.perform_method(ts_method, sol, delayed_success=True)
                 self.update_tabu_list(sol, sol_old)
                 self.delayed_success_update(m, sol.obj(), t_start, sol_old)
-                
+
                 if self.step_logger.hasHandlers():
                     for ta in self.tabu_list.tabu_list:
                         self.step_logger.info(f'TA: {ta}')
