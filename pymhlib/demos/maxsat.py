@@ -181,6 +181,11 @@ class MAXSATSolution(BinaryVectorSolution):
         """ Perform uniform crossover as crossover."""
         return self.uniform_crossover(other)
 
+    def local_improve_restricted(self, par: Any, _result: Result, tabu_list, incumbent: 'MAXSATSolution'):
+        """Perform one k_flip_neighborhood_search while avoiding solutions that are tabu
+        """
+        self.k_flip_neighborhood_search(par, True, tabu_list, incumbent)
+
     
     # methods for GRASP
     def update_solution(self, sel):

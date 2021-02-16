@@ -24,6 +24,9 @@ class TS(Scheduler):
         self.meths_rli = meths_rli 
 
     def update_tabu_list(self, sol: Solution, sol_old: Solution):
+        ll = self.tabu_list.generate_list_length(self.iteration) # generate list length for current iteration
+        if self.step_logger.hasHandlers():
+            self.step_logger.info(f'LL: {ll}')
         
         if self.incumbent_iteration == self.iteration and self.incumbent.is_tabu(self.tabu_list):
             # a new best solution was found, but it was tabu (aspiration criterion)
@@ -33,7 +36,7 @@ class TS(Scheduler):
                 self.tabu_list.delete_attribute({t})
             if self.step_logger.hasHandlers():
                 self.step_logger.info(f'TA_DEL: {tabu_violated}')
-            
+
         self.tabu_list.update_list() # updates lifespan of each tabu attribute and deletes expired attributes
         self.tabu_list.add_attribute(sol.get_tabu_attribute(sol_old), self.tabu_list.current_ll)
 
@@ -51,13 +54,10 @@ class TS(Scheduler):
                     if self.step_logger.hasHandlers():
                         for ta in self.tabu_list.tabu_list:
                             self.step_logger.info(f'TA: {ta}')
-                    # TODO temporary workaround
-                    if 'k' in m.func.__code__.co_varnames: 
-                        m.func(sol, m.par, best_improvement=True, tabu_list=self.tabu_list, incumbent=self.incumbent)
-                    else:
-                        m.func(sol,best_improvement=True, tabu_list=self.tabu_list, incumbent=self.incumbent)
-                ll = self.tabu_list.generate_list_length(self.iteration) # generate list length for current iteration
-                ts_method = Method(m.name, ts_iteration, ll)
+
+                    m.func(sol, m.par, None, self.tabu_list, self.incumbent)
+
+                ts_method = Method(m.name, ts_iteration, m.par)
 
                 t_start = time.process_time()
                 res = self.perform_method(ts_method, sol, delayed_success=True)

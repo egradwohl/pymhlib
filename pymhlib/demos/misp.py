@@ -146,6 +146,11 @@ class MISPSolution(SubsetVectorSolution):
         return self.subset_crossover(other)
 
 
+    def local_improve_restricted(self, _par: Any, result: Result, tabu_list, incumbent: 'MISPSolution'):
+        """Scheduler method that performs one iteration of the exchange neighborhood."""
+        self.two_exchange_random_fill_neighborhood_search(True, tabu_list, incumbent)
+        
+
     # methods for GRASP
     def update_solution(self, sel_elem):
 
