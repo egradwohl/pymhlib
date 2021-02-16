@@ -25,8 +25,8 @@ class TS(Scheduler):
 
     def update_tabu_list(self, sol: Solution, sol_old: Solution):
         ll = self.tabu_list.generate_list_length(self.iteration) # generate list length for current iteration
-        if self.step_logger.hasHandlers():
-            self.step_logger.info(f'LL: {ll}')
+
+        self.step_logger.info(f'LL: {ll}')
         
         if self.incumbent_iteration == self.iteration and self.incumbent.is_tabu(self.tabu_list):
             # a new best solution was found, but it was tabu (aspiration criterion)
@@ -34,8 +34,8 @@ class TS(Scheduler):
             tabu_violated = sol_old.get_tabu_attribute(self.incumbent)
             for t in tabu_violated:
                 self.tabu_list.delete_attribute({t})
-            if self.step_logger.hasHandlers():
-                self.step_logger.info(f'TA_DEL: {tabu_violated}')
+
+            self.step_logger.info(f'TA_DEL: {tabu_violated}')
 
         self.tabu_list.update_list() # updates lifespan of each tabu attribute and deletes expired attributes
         self.tabu_list.add_attribute(sol.get_tabu_attribute(sol_old), self.tabu_list.current_ll)
@@ -51,9 +51,9 @@ class TS(Scheduler):
                 sol_old = sol.copy()
 
                 def ts_iteration(sol: Solution, _par, result):
-                    if self.step_logger.hasHandlers():
-                        for ta in self.tabu_list.tabu_list:
-                            self.step_logger.info(f'TA: {ta}')
+
+                    for ta in self.tabu_list.tabu_list:
+                        self.step_logger.info(f'TA: {ta}')
 
                     m.func(sol, m.par, None, self.tabu_list, self.incumbent)
 
@@ -64,10 +64,9 @@ class TS(Scheduler):
                 self.update_tabu_list(sol, sol_old)
                 self.delayed_success_update(m, sol.obj(), t_start, sol_old)
 
-                if self.step_logger.hasHandlers():
-                    for ta in self.tabu_list.tabu_list:
-                        self.step_logger.info(f'TA: {ta}')
-                    self.step_logger.info('END_ITER')
+                for ta in self.tabu_list.tabu_list:
+                    self.step_logger.info(f'TA: {ta}')
+                self.step_logger.info('END_ITER')
 
                 if res.terminate:
                     return

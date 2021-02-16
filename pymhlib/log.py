@@ -61,19 +61,13 @@ def init_logger():
     if settings.mh_log_step != 'None':
         step_file_handler = logging.FileHandler(settings.mh_log_step, "w")
         step_file_handler.setFormatter(formatter)
-        step_handler = logging.handlers.MemoryHandler(
-            capacity=1024 * 100,
-            flushLevel=logging.ERROR,
-            target=step_file_handler
-        )
-        step_handler.setFormatter(formatter)
         step_logger.handlers = []
-        step_logger.addHandler(step_handler)
         step_logger.addHandler(step_file_handler)
         step_logger.propagate = False
         step_logger.setLevel(logging.INFO)
     else:
         step_logger.handlers = []
+        step_logger.addHandler(logging.NullHandler())
         step_logger.propagate = False
 
 

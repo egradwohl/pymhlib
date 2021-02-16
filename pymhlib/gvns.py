@@ -77,10 +77,9 @@ class GVNS(Scheduler):
                 if not terminate and use_vnd:
                     terminate = self.vnd(sol2)
                 self.delayed_success_update(m, sol.obj(), t_start, sol2)
-                ### log an entire cycle e.g. sh+li, rgc+li
-                if self.step_logger.hasHandlers:
-                    self.step_logger.info('END_ITER')
-                #########
+
+                self.step_logger.info('END_ITER')
+
                 if sol2.is_better(sol):
                     sol.copy_from(sol2)
                     if terminate or res.terminate:
