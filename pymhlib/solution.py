@@ -207,7 +207,17 @@ class Solution(ABC):
         raise NotImplementedError
 
     def construct_greedy(self, par, _result):
-        self.greedy_randomized_construction( 1, _result)
+        greedy_sol = self.copy_empty()
+
+        while not greedy_sol.is_complete_solution():
+            
+            cl = greedy_sol.candidate_list()
+            rcl = greedy_sol.restricted_candidate_list_k(cl, 1)
+            sel = random.choice(rcl)
+            greedy_sol.update_solution(sel)
+
+        self.copy_from(greedy_sol)
+        self.obj()
 
 
     def is_tabu(self, tabu_list: TabuList) -> bool:
