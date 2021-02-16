@@ -308,3 +308,21 @@ class SubsetVectorSolution(VectorSolution, ABC):
         if update_obj_val:
             self.invalidate()
         return True
+
+
+    def is_tabu(self, tabu_list: TabuList):
+        if tabu_list == None:
+            return False
+        solution = set(self.x[:self.sel])
+        for ta in tabu_list.tabu_list:
+            if ta.attribute.issubset(solution):
+                return True
+        return False
+
+    def get_tabu_attribute(self, sol_old: 'SubsetVectorSolution'):
+        new_sol = set(self.x[:self.sel])
+        old_sol = set(sol_old.x[:sol_old.sel])
+        diff = old_sol.difference(new_sol)
+        if len(diff) == 0:
+            return False
+        return diff

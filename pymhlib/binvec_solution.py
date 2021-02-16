@@ -143,3 +143,22 @@ class BinaryVectorSolution(VectorSolution, ABC):
         delta_obj = self.flip_move_delta_eval(p)
         return p, delta_obj
 
+
+    def is_tabu(self, tabu_list: TabuList):
+        if tabu_list == None:
+            return False
+        solution = {i*-1 if v ==0 else i for i,v in enumerate(self.x,start=1)}
+        for ta in tabu_list.tabu_list:
+            if ta.attribute.issubset(solution):
+                return True
+        return False
+
+    def get_tabu_attribute(self, sol_old: 'BinaryVectorSolution'):
+        # tabu attribute is stored as set of positive/negative variables
+        new_sol = {i*-1 if v ==0 else i for i,v in enumerate(self.x,start=1)}
+        old_sol = {i*-1 if v ==0 else i for i,v in enumerate(sol_old.x,start=1)}
+        diff = old_sol.difference(new_sol)
+        if len(diff) == 0:
+            return False
+        return diff
+

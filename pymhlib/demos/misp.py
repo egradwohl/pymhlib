@@ -12,7 +12,6 @@ from pymhlib.solution import TObj
 from pymhlib.subsetvec_solution import SubsetVectorSolution
 from pymhlib.scheduler import Result
 from pymhlib.demos.graphs import create_or_read_simple_graph
-from pymhlib.ts_helper import TabuList
 
 
 class MISPInstance:
@@ -202,22 +201,7 @@ class MISPSolution(SubsetVectorSolution):
     
         return np.array(rcl)
 
-    def is_tabu(self, tabu_list: TabuList):
-        if tabu_list == None:
-            return False
-        solution = set(self.x[:self.sel])
-        for ta in tabu_list.tabu_list:
-            if ta.attribute.issubset(solution):
-                return True
-        return False
 
-    def get_tabu_attribute(self, sol_old: 'MISPSolution'):
-        new_sol = set(self.x[:self.sel])
-        old_sol = set(sol_old.x[:sol_old.sel])
-        diff = old_sol.difference(new_sol)
-        if len(diff) == 0:
-            return False
-        return diff
 
 
 if __name__ == '__main__':
