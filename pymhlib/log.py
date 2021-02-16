@@ -67,7 +67,6 @@ def init_logger():
         step_logger.setLevel(logging.INFO)
     else:
         step_logger.handlers = []
-        step_logger.addHandler(logging.NullHandler())
         step_logger.propagate = False
 
 

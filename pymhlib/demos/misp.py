@@ -147,7 +147,7 @@ class MISPSolution(SubsetVectorSolution):
 
 
     def local_improve_restricted(self, _par: Any, result: Result, tabu_list, incumbent: 'MISPSolution'):
-        """Scheduler method that performs one iteration of the exchange neighborhood."""
+        """Scheduler method that performs one iteration of the exchange neighborhood restricted by solutions that are tabu."""
         self.two_exchange_random_fill_neighborhood_search(True, tabu_list, incumbent)
         
 
@@ -183,22 +183,22 @@ class MISPSolution(SubsetVectorSolution):
         return candidates
 
 
-    def restricted_candidate_list(self, cl: dict, par):
-
+    def restricted_candidate_list_k(self, cl: dict, par):
         rcl = list()
 
-        if type(par) == int:
-            candidates = {k:v for k,v in cl.items()}
-            k = min(len(candidates),par)
-            for i in range(k):
-                key = min(candidates, key=candidates.get)
-                rcl.append(key)
-                candidates.pop(key)
+        candidates = {k:v for k,v in cl.items()}
+        k = min(len(candidates),par)
+        for i in range(k):
+            key = min(candidates, key=candidates.get)
+            rcl.append(key)
+            candidates.pop(key)
+        return np.array(rcl)
+    
 
-        if type(par) == float:
-            mini = min(cl.values())
-            maxi = max(cl.values())
-            rcl = [k for k,v in cl.items() if v <= mini + par * (maxi-mini)]
+    def restricted_candidate_list_alpha(self, cl: dict, par):
+        mini = min(cl.values())
+        maxi = max(cl.values())
+        rcl = [k for k,v in cl.items() if v <= mini + par * (maxi-mini)]
     
         return np.array(rcl)
 

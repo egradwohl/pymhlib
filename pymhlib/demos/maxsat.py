@@ -221,24 +221,26 @@ class MAXSATSolution(BinaryVectorSolution):
         return candidates
 
 
-    def restricted_candidate_list(self, cl: dict(), par):
-
+    def restricted_candidate_list_k(self, cl: dict, par):
+        
         rcl = list()
 
-        if type(par) == int:
-            candidates = {k:v for k,v in cl.items()}
-            k = min(len(candidates),par)
-            for i in range(k):
-                key = max(candidates, key=candidates.get)
-                rcl.append(key)
-                candidates.pop(key)
+        candidates = {k:v for k,v in cl.items()}
+        k = min(len(candidates),par)
+        for i in range(k):
+            key = max(candidates, key=candidates.get)
+            rcl.append(key)
+            candidates.pop(key)
+        return np.array(rcl)
+    
+    
+    def restricted_candidate_list_alpha(self, cl: dict, par):
 
-        if type(par) == float:
-            maximum = max(cl.values())
-            rcl = [k for k,v in cl.items() if v >= maximum * par]
+        maximum = max(cl.values())
+        minimum = min(cl.values())
+        rcl = [k for k,v in cl.items() if v >= v >= maximum - par * (maximum-minimum)]
             
         return np.array(rcl)
-
 
     def is_tabu(self, tabu_list: TabuList):
         if tabu_list == None:

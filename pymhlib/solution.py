@@ -19,6 +19,9 @@ from pymhlib.ts_helper import TabuList
 
 parser = get_settings_parser()
 parser.add_argument("--mh_xover_pts", type=int, default=1, help='number of crossover points in multi-point crossover')
+parser.add_argument("--mh_grc_k", type=int, default=1, help='grasp-parameter for constructing restricted candidate list (k best candidates)')
+parser.add_argument("--mh_grc_alpha", type=float, default=0, help='grasp-parameter for constructing restricted candidate list (threshold value)')
+parser.add_argument("--mh_grc_par", type=bool, default=True, help='choose grasp-parameter for constructing restricted candidate list, if "True" use "k" else use "alpha"')
 
 TObj = TypeVar('TObj', int, float)  # Type of objective value
 
@@ -154,7 +157,7 @@ class Solution(ABC):
             self.step_logger.info(f'SOL: {sol_str}')
 
             cl = greedy_sol.candidate_list()
-            rcl = greedy_sol.restricted_candidate_list(cl, par)
+            rcl = greedy_sol.restricted_candidate_list(cl)
             sel = random.choice(rcl)
             greedy_sol.update_solution(sel)
 
@@ -168,19 +171,33 @@ class Solution(ABC):
 
 
     @abstractmethod
-    def copy_empty(self):
+    def copy_empty(self) -> 'Solution':
         raise NotImplementedError
 
     @abstractmethod
-    def is_complete_solution(self):
+    def is_complete_solution(self) -> bool:
         raise NotImplementedError
 
     @abstractmethod
-    def candidate_list(self):
+    def candidate_list(self) -> dict:
+        raise NotImplementedError
+
+    def restricted_candidate_list(self, cl: dict) -> np.array:
+        """Selects best candidates from candidate list according to parameter k or alpha.
+
+        k and alpha are passed in settings.mh_grc_k and settings.mh_grc_alpha.
+        The decision if k or alpha should be use is passed in dsettings.mh_grc_par  (default=k)"""
+        if settings.mh_grc_par:
+            return self.restricted_candidate_list_k(cl, settings.mh_grc_k)
+        else:
+            return self.restricted_candidate_list_alpha(cl, settings.mh_grc_alpha)
+
+    @abstractmethod
+    def restricted_candidate_list_k(self, cl: dict, par) -> np.array:
         raise NotImplementedError
 
     @abstractmethod
-    def restricted_candidate_list(self, cl: dict, par):
+    def restricted_candidate_list_alpha(self, cl: dict, par) -> np.array:
         raise NotImplementedError
 
     @abstractmethod
@@ -191,7 +208,7 @@ class Solution(ABC):
         self.greedy_randomized_construction( 1, _result)
 
 
-    def is_tabu(self, tabu_list: TabuList):
+    def is_tabu(self, tabu_list: TabuList) -> bool:
         raise NotImplementedError
 
 
