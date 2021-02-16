@@ -78,8 +78,6 @@ class GVNS(Scheduler):
                     terminate = self.vnd(sol2)
                 self.delayed_success_update(m, sol.obj(), t_start, sol2)
 
-                self.step_logger.info('END_ITER')
-
                 if sol2.is_better(sol):
                     sol.copy_from(sol2)
                     if terminate or res.terminate:

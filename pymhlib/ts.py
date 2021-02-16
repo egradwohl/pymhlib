@@ -66,7 +66,6 @@ class TS(Scheduler):
 
                 for ta in self.tabu_list.tabu_list:
                     self.step_logger.info(f'TA: {ta}')
-                self.step_logger.info('END_ITER')
 
                 if res.terminate:
                     return

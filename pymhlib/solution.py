@@ -153,18 +153,20 @@ class Solution(ABC):
 
         while not greedy_sol.is_complete_solution():
             
-            sol_str = str(greedy_sol).replace('\n', ' ')
-            self.step_logger.info(f'SOL: {sol_str}')
+            if self.step_logger.hasHandlers():
+                sol_str = str(greedy_sol).replace('\n', ' ')
+                self.step_logger.info(f'SOL: {sol_str}')
 
             cl = greedy_sol.candidate_list()
             rcl = greedy_sol.restricted_candidate_list(cl)
             sel = random.choice(rcl)
             greedy_sol.update_solution(sel)
 
-            self.step_logger.info(f'CL: {cl}\nPAR: {par}')
-            rcl_str = '[ ' + ' '.join([str(r) for r in rcl]) + ' ]'
-            self.step_logger.info(f'RCL: {rcl_str}')
-            self.step_logger.info(f'SEL: {sel}')
+            if self.step_logger.hasHandlers():
+                self.step_logger.info(f'CL: {cl}\nPAR: {par}')
+                rcl_str = '[ ' + ' '.join([str(r) for r in rcl]) + ' ]'
+                self.step_logger.info(f'RCL: {rcl_str}')
+                self.step_logger.info(f'SEL: {sel}')
 
         self.copy_from(greedy_sol)
         self.obj()
