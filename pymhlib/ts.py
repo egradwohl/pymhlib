@@ -43,7 +43,8 @@ class TS(Scheduler):
     
     
     def ts(self, sol: Solution):
-
+        if not self.meths_rli:
+            return
         while True:
             # use of multiple different methods for restricted neighborhood search is possible,
             # but usually only one is used
